@@ -226,6 +226,7 @@ end;
 procedure TForm1.a0Click(Sender: TObject);
 begin
   Form1.AlphaBlend := False;
+  Form1.AlphaBlendValue := 255;
   a0.Checked := True;
   a20.Checked := False;
   a40.Checked := False;
@@ -317,6 +318,7 @@ end;
 
 procedure TForm1.QuitClick(Sender: TObject);
 begin
+  SaveConfig;
   Application.Terminate();
 end;
 
