@@ -67,8 +67,6 @@ var
   FMouseDownPt: TPoint;
   TimeStr: string;
   TimeFmt: string;
-  Cfg: TRegistry;
-  RunKey: TRegistry;
 
 implementation
 
@@ -77,7 +75,15 @@ implementation
 { TForm1 }
 
 procedure TForm1.SaveConfig();
+var
+  Cfg: TRegistry;
+  RunKey: TRegistry;
 begin
+
+  Cfg := TRegistry.Create(KEY_READ Or KEY_WRITE);
+  Cfg.RootKey := HKEY_CURRENT_USER;
+  if Cfg.OpenKey('Software\\Tenox\\TClock\\',True) then
+  begin
     Cfg.WriteBool('TitleBar', TitleBar.Checked);
     Cfg.WriteBool('IsOnTop', IsOnTop.Checked);
     Cfg.WriteBool('Seconds', Seconds.Checked);
@@ -90,17 +96,31 @@ begin
     Cfg.WriteInteger('Xpos', Form1.Left);
     Cfg.WriteInteger('Ypos', Form1.Top);
     Cfg.WriteInteger('Alpha', Form1.AlphaBlendValue);
-end;
+  end;
+  Cfg.Free;
 
-procedure TForm1.LoadConfig();
-
-begin
   RunKey := TRegistry.Create(KEY_READ Or KEY_WRITE);
   RunKey.RootKey := HKEY_CURRENT_USER;
   if RunKey.OpenKey('Software\\Microsoft\\Windows\\CurrentVersion\\Run\\',True) then
-     if RunKey.ValueExists('TClock') then
+      if RunKey.ValueExists('TClock') then
         RunOnStart.Checked := True;
 
+  if RunOnStart.Checked then
+  begin
+    RunKey.WriteString('TClock', '"' + Application.ExeName + '"');
+  end
+  else
+  begin
+    RunKey.DeleteValue('TClock');
+  end;
+  RunKey.Free;
+end;
+
+procedure TForm1.LoadConfig();
+var
+  Cfg: TRegistry;
+  RunKey: TRegistry;
+begin
   Cfg := TRegistry.Create(KEY_READ Or KEY_WRITE);
   Cfg.RootKey := HKEY_CURRENT_USER;
   if Cfg.OpenKey('Software\\Tenox\\TClock\\',True) then
@@ -158,6 +178,15 @@ begin
       if Form1.AlphaBlend = True then a0.Checked := False;
     end;
 
+    Cfg.Free;
+
+    RunKey := TRegistry.Create(KEY_READ Or KEY_WRITE);
+    RunKey.RootKey := HKEY_CURRENT_USER;
+    if RunKey.OpenKey('Software\\Microsoft\\Windows\\CurrentVersion\\Run\\',True) then
+       if RunKey.ValueExists('TClock') then
+          RunOnStart.Checked := True;
+
+    RunKey.Free;
   end;
 end;
 
@@ -297,8 +326,8 @@ end;
 
 procedure TForm1.AboutClick(Sender: TObject);
 begin
-  ShowMessage('Tenox Desktop Clock v1.0' + sLineBreak +
-    'Copyright (c) 2017 by Antoni Sawicki' + sLineBreak +
+  ShowMessage('Tenox Desktop Clock v2.0' + sLineBreak +
+    'Copyright (c) 2017-2018 by Antoni Sawicki' + sLineBreak +
     'https://github.com/tenox7/tclock/');
 end;
 
@@ -307,12 +336,10 @@ begin
   if RunOnStart.Checked then
   begin
     RunOnStart.Checked := False;
-    RunKey.DeleteValue('TClock');
   end
   else
   begin
     RunOnStart.Checked := True;
-    RunKey.WriteString('TClock', '"' + Application.ExeName + '"');
   end;
 end;
 

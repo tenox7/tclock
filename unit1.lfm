@@ -1,20 +1,21 @@
 object Form1: TForm1
   Cursor = crNone
-  Left = 871
+  Left = 1157
   Height = 62
-  Top = 238
+  Top = 1443
   Width = 302
   HorzScrollBar.Visible = False
-  BorderStyle = bsToolWindow
+  BorderStyle = bsSizeToolWin
   Caption = 'TClock'
   ClientHeight = 62
   ClientWidth = 302
   Color = 4210752
+  DesignTimePPI = 84
   FormStyle = fsSystemStayOnTop
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   ShowInTaskBar = stNever
-  LCLVersion = '1.6.4.0'
+  LCLVersion = '1.8.4.0'
   object Label1: TLabel
     Left = 0
     Height = 62
