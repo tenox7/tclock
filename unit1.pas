@@ -13,7 +13,8 @@ type
   { TForm1 }
 
   TForm1 = class(TForm)
-    ColorDialog1: TColorDialog;
+    ColorDialogFg: TColorDialog;
+    ColorDialogBg: TColorDialog;
     FontDialog1: TFontDialog;
     Label1: TLabel;
     About: TMenuItem;
@@ -27,6 +28,7 @@ type
     a60: TMenuItem;
     a80: TMenuItem;
     a0: TMenuItem;
+    Foreground: TMenuItem;
     RunOnStart: TMenuItem;
     Seconds: TMenuItem;
     TitleBar: TMenuItem;
@@ -45,6 +47,7 @@ type
     procedure FormDestroy(Sender: TObject);
     procedure IsOnTopClick(Sender: TObject);
     procedure AboutClick(Sender: TObject);
+    procedure ForegroundClick(Sender: TObject);
     procedure RunOnStartClick(Sender: TObject);
     procedure QuitClick(Sender: TObject);
     procedure SecondsClick(Sender: TObject);
@@ -233,10 +236,29 @@ begin
   SaveConfig;
 end;
 
+procedure TForm1.FontPickClick(Sender: TObject);
+
+begin
+  FontDialog1.Font := Label1.Font;
+  if FontDialog1.Execute then
+  begin
+    Label1.Font := FontDialog1.Font;
+    WindowToFont;
+  end;
+  SaveConfig;
+end;
+
+procedure TForm1.ForegroundClick(Sender: TObject);
+begin
+  if ColorDialogFg.Execute then
+    Label1.Font.Color := ColorDialogFg.Color;
+  SaveConfig;
+end;
+
 procedure TForm1.BackgroundClick(Sender: TObject);
 begin
-  if ColorDialog1.Execute then
-    Form1.Color := ColorDialog1.Color;
+  if ColorDialogBg.Execute then
+    Form1.Color := ColorDialogBg.Color;
   SaveConfig;
 end;
 
@@ -331,6 +353,7 @@ begin
     'https://github.com/tenox7/tclock/');
 end;
 
+
 procedure TForm1.RunOnStartClick(Sender: TObject);
 begin
   if RunOnStart.Checked then
@@ -385,17 +408,6 @@ begin
   SaveConfig;
 end;
 
-procedure TForm1.FontPickClick(Sender: TObject);
-
-begin
-  FontDialog1.Font := Label1.Font;
-  if FontDialog1.Execute then
-  begin
-    Label1.Font := FontDialog1.Font;
-    WindowToFont;
-  end;
-  SaveConfig;
-end;
 
 procedure TForm1.Label1MouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: integer);
