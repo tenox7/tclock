@@ -1,8 +1,8 @@
-object Form1: TForm1
+object ClockForm: TClockForm
   Cursor = crNone
-  Left = 368
+  Left = 799
   Height = 62
-  Top = 594
+  Top = 1141
   Width = 302
   HorzScrollBar.Visible = False
   BorderStyle = bsToolWindow
@@ -10,13 +10,12 @@ object Form1: TForm1
   ClientHeight = 62
   ClientWidth = 302
   Color = 4210752
-  DesignTimePPI = 84
   FormStyle = fsSystemStayOnTop
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   ShowInTaskBar = stNever
   LCLVersion = '1.8.4.0'
-  object Label1: TLabel
+  object ClockLabel: TLabel
     Left = 0
     Height = 62
     Top = 0
@@ -35,16 +34,16 @@ object Form1: TForm1
     Layout = tlCenter
     ParentColor = False
     ParentFont = False
-    PopupMenu = PopupMenu1
-    OnMouseDown = Label1MouseDown
-    OnMouseMove = Label1MouseMove
+    PopupMenu = ClockMenu
+    OnMouseDown = ClockLabelMouseDown
+    OnMouseMove = ClockLabelMouseMove
   end
-  object Timer1: TTimer
-    OnTimer = Timer1Timer
+  object ClockTimer: TTimer
+    OnTimer = ClockTimerTick
     left = 8
     top = 8
   end
-  object PopupMenu1: TPopupMenu
+  object ClockMenu: TPopupMenu
     left = 40
     top = 8
     object About: TMenuItem

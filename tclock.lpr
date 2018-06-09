@@ -15,7 +15,7 @@ uses
 begin
   RequireDerivedFormResource:=True;
   Application.Initialize;
-  Application.CreateForm(TForm1, Form1);
+  Application.CreateForm(TClockForm, ClockForm);
   //TrayIcon1.Show;
   //Form1.ShowInTaskBar := stNever;
   //Application.MainFormOnTaskBar := True; https://bugs.freepascal.org/view.php?id=17294

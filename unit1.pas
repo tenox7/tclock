@@ -10,13 +10,13 @@ uses
 
 type
 
-  { TForm1 }
+  { TClockForm }
 
-  TForm1 = class(TForm)
+  TClockForm = class(TForm)
     ColorDialogFg: TColorDialog;
     ColorDialogBg: TColorDialog;
     FontDialog1: TFontDialog;
-    Label1: TLabel;
+    ClockLabel: TLabel;
     About: TMenuItem;
     IsOnTop: TMenuItem;
     FontPick: TMenuItem;
@@ -33,8 +33,8 @@ type
     Seconds: TMenuItem;
     TitleBar: TMenuItem;
     Quit: TMenuItem;
-    PopupMenu1: TPopupMenu;
-    Timer1: TTimer;
+    ClockMenu: TPopupMenu;
+    ClockTimer: TTimer;
     procedure a0Click(Sender: TObject);
     procedure a20Click(Sender: TObject);
     procedure a40Click(Sender: TObject);
@@ -51,9 +51,9 @@ type
     procedure RunOnStartClick(Sender: TObject);
     procedure QuitClick(Sender: TObject);
     procedure SecondsClick(Sender: TObject);
-    procedure Timer1Timer(Sender: TObject);
-    procedure Label1MouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: integer);
-    procedure Label1MouseMove(Sender: TObject; Shift: TShiftState; X, Y: integer);
+    procedure ClockTimerTick(Sender: TObject);
+    procedure ClockLabelMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: integer);
+    procedure ClockLabelMouseMove(Sender: TObject; Shift: TShiftState; X, Y: integer);
     procedure TitleBarClick(Sender: TObject);
     procedure WindowToFont();
     procedure TimeFormat();
@@ -66,7 +66,7 @@ type
   end;
 
 var
-  Form1: TForm1;
+  ClockForm: TClockForm;
   FMouseDownPt: TPoint;
   TimeStr: string;
   TimeFmt: string;
@@ -75,9 +75,9 @@ implementation
 
 {$R *.lfm}
 
-{ TForm1 }
+{ TClockForm }
 
-procedure TForm1.SaveConfig();
+procedure TClockForm.SaveConfig();
 var
   Cfg: TRegistry;
   RunKey: TRegistry;
@@ -91,14 +91,14 @@ begin
     Cfg.WriteBool('IsOnTop', IsOnTop.Checked);
     Cfg.WriteBool('Seconds', Seconds.Checked);
     Cfg.WriteBool('AMPM', AMPM.Checked);
-    Cfg.WriteString('Background', ColorToString(Form1.Color));
-    Cfg.WriteString('FontName', Label1.Font.Name);
-    Cfg.WriteString('FontColor', ColorToString(Label1.Font.Color));
-    Cfg.WriteInteger('FontSize', Label1.Font.Size);
-    Cfg.WriteInteger('FontStyle', Integer(Label1.Font.Style));
-    Cfg.WriteInteger('Xpos', Form1.Left);
-    Cfg.WriteInteger('Ypos', Form1.Top);
-    Cfg.WriteInteger('Alpha', Form1.AlphaBlendValue);
+    Cfg.WriteString('Background', ColorToString(ClockForm.Color));
+    Cfg.WriteString('FontName', ClockLabel.Font.Name);
+    Cfg.WriteString('FontColor', ColorToString(ClockLabel.Font.Color));
+    Cfg.WriteInteger('FontSize', ClockLabel.Font.Size);
+    Cfg.WriteInteger('FontStyle', Integer(ClockLabel.Font.Style));
+    Cfg.WriteInteger('Xpos', ClockForm.Left);
+    Cfg.WriteInteger('Ypos', ClockForm.Top);
+    Cfg.WriteInteger('Alpha', ClockForm.AlphaBlendValue);
   end;
   Cfg.Free;
 
@@ -119,7 +119,7 @@ begin
   RunKey.Free;
 end;
 
-procedure TForm1.LoadConfig();
+procedure TClockForm.LoadConfig();
 var
   Cfg: TRegistry;
   RunKey: TRegistry;
@@ -132,18 +132,18 @@ begin
     begin
       TitleBar.Checked := Cfg.ReadBool('TitleBar');
       if TitleBar.Checked then
-        Form1.BorderStyle := bsToolWindow
+        ClockForm.BorderStyle := bsToolWindow
       else
-        Form1.BorderStyle := bsNone;
+        ClockForm.BorderStyle := bsNone;
     end;
 
     if Cfg.ValueExists('IsOnTop') then
     begin
       IsOnTop.Checked := Cfg.ReadBool('IsOnTop');
       if IsOnTop.Checked then
-        Form1.FormStyle := fsSystemStayOnTop
+        ClockForm.FormStyle := fsSystemStayOnTop
       else
-        Form1.FormStyle := fsNormal;
+        ClockForm.FormStyle := fsNormal;
     end;
 
     if Cfg.ValueExists('Seconds') then
@@ -153,32 +153,32 @@ begin
       AMPM.Checked := Cfg.ReadBool('AMPM');
 
     if Cfg.ValueExists('Background') then
-      Form1.Color := StringToColor(Cfg.ReadString('Background'));
+      ClockForm.Color := StringToColor(Cfg.ReadString('Background'));
 
     if Cfg.ValueExists('FontName') then
-      Label1.Font.Name := Cfg.ReadString('FontName');
+      ClockLabel.Font.Name := Cfg.ReadString('FontName');
 
     if Cfg.ValueExists('FontColor') then
-      Label1.Font.Color := StringToColor(Cfg.ReadString('FontColor'));
+      ClockLabel.Font.Color := StringToColor(Cfg.ReadString('FontColor'));
 
     if Cfg.ValueExists('FontSize') then
-      Label1.Font.Size := Cfg.ReadInteger('FontSize');
+      ClockLabel.Font.Size := Cfg.ReadInteger('FontSize');
 
     if Cfg.ValueExists('FontStyle') then
-      Label1.Font.Style := TFontStyles(Cfg.ReadInteger('FontStyle'));
+      ClockLabel.Font.Style := TFontStyles(Cfg.ReadInteger('FontStyle'));
 
     if Cfg.ValueExists('Xpos') Then
-      Form1.Left := Cfg.ReadInteger('Xpos');
+      ClockForm.Left := Cfg.ReadInteger('Xpos');
 
     if Cfg.ValueExists('Ypos') Then
-      Form1.Top := Cfg.ReadInteger('Ypos');
+      ClockForm.Top := Cfg.ReadInteger('Ypos');
 
     if Cfg.ValueExists('Alpha') Then
     begin
-      Form1.AlphaBlendValue := Cfg.ReadInteger('Alpha');
-      if Form1.AlphaBlendValue > 0 then Form1.AlphaBlend := True
-      else Form1.AlphaBlend := False;
-      if Form1.AlphaBlend = True then a0.Checked := False;
+      ClockForm.AlphaBlendValue := Cfg.ReadInteger('Alpha');
+      if ClockForm.AlphaBlendValue > 0 then ClockForm.AlphaBlend := True
+      else ClockForm.AlphaBlend := False;
+      if ClockForm.AlphaBlend = True then a0.Checked := False;
     end;
 
     Cfg.Free;
@@ -194,13 +194,13 @@ begin
 end;
 
 
-procedure TForm1.WindowToFont();
+procedure TClockForm.WindowToFont();
 begin
-  Form1.Width := Label1.Canvas.TextWidth(TimeStr) + 20;
-  Form1.Height := Label1.Canvas.TextHeight(TimeStr) + 10;
+  ClockForm.Width := ClockLabel.Canvas.TextWidth(TimeStr) + 20;
+  ClockForm.Height := ClockLabel.Canvas.TextHeight(TimeStr) + 10;
 end;
 
-procedure TForm1.TimeFormat();
+procedure TClockForm.TimeFormat();
 begin
   if Seconds.Checked and AMPM.Checked then
   begin
@@ -224,45 +224,44 @@ begin
   end;
 end;
 
-procedure TForm1.FormCreate(Sender: TObject);
+procedure TClockForm.FormCreate(Sender: TObject);
 begin
   LoadConfig;
   TimeFormat;
   WindowToFont;
 end;
 
-procedure TForm1.FormDestroy(Sender: TObject);
+procedure TClockForm.FormDestroy(Sender: TObject);
 begin
   SaveConfig;
 end;
 
-procedure TForm1.FontPickClick(Sender: TObject);
-
+procedure TClockForm.FontPickClick(Sender: TObject);
 begin
-  FontDialog1.Font := Label1.Font;
+  FontDialog1.Font := ClockLabel.Font;
   if FontDialog1.Execute then
   begin
-    Label1.Font := FontDialog1.Font;
+    ClockLabel.Font := FontDialog1.Font;
     WindowToFont;
   end;
   SaveConfig;
 end;
 
-procedure TForm1.ForegroundClick(Sender: TObject);
+procedure TClockForm.ForegroundClick(Sender: TObject);
 begin
   if ColorDialogFg.Execute then
-    Label1.Font.Color := ColorDialogFg.Color;
+    ClockLabel.Font.Color := ColorDialogFg.Color;
   SaveConfig;
 end;
 
-procedure TForm1.BackgroundClick(Sender: TObject);
+procedure TClockForm.BackgroundClick(Sender: TObject);
 begin
   if ColorDialogBg.Execute then
-    Form1.Color := ColorDialogBg.Color;
+    ClockForm.Color := ColorDialogBg.Color;
   SaveConfig;
 end;
 
-procedure TForm1.AMPMClick(Sender: TObject);
+procedure TClockForm.AMPMClick(Sender: TObject);
 begin
   if AMPM.Checked = True then
     AMPM.Checked := False
@@ -274,10 +273,10 @@ begin
   SaveConfig;
 end;
 
-procedure TForm1.a0Click(Sender: TObject);
+procedure TClockForm.a0Click(Sender: TObject);
 begin
-  Form1.AlphaBlend := False;
-  Form1.AlphaBlendValue := 255;
+  ClockForm.AlphaBlend := False;
+  ClockForm.AlphaBlendValue := 255;
   a0.Checked := True;
   a20.Checked := False;
   a40.Checked := False;
@@ -286,10 +285,10 @@ begin
   SaveConfig;
 end;
 
-procedure TForm1.a20Click(Sender: TObject);
+procedure TClockForm.a20Click(Sender: TObject);
 begin
-  Form1.AlphaBlend := True;
-  Form1.AlphaBlendValue := 200;
+  ClockForm.AlphaBlend := True;
+  ClockForm.AlphaBlendValue := 200;
   a0.Checked := False;
   a20.Checked := True;
   a40.Checked := False;
@@ -298,10 +297,10 @@ begin
   SaveConfig;
 end;
 
-procedure TForm1.a40Click(Sender: TObject);
+procedure TClockForm.a40Click(Sender: TObject);
 begin
-  Form1.AlphaBlend := True;
-  Form1.AlphaBlendValue := 150;
+  ClockForm.AlphaBlend := True;
+  ClockForm.AlphaBlendValue := 150;
   a0.Checked := False;
   a20.Checked := False;
   a40.Checked := True;
@@ -310,10 +309,10 @@ begin
   SaveConfig;
 end;
 
-procedure TForm1.a60Click(Sender: TObject);
+procedure TClockForm.a60Click(Sender: TObject);
 begin
-  Form1.AlphaBlend := True;
-  Form1.AlphaBlendValue := 100;
+  ClockForm.AlphaBlend := True;
+  ClockForm.AlphaBlendValue := 100;
   a0.Checked := False;
   a20.Checked := False;
   a40.Checked := False;
@@ -322,10 +321,10 @@ begin
   SaveConfig;
 end;
 
-procedure TForm1.a80Click(Sender: TObject);
+procedure TClockForm.a80Click(Sender: TObject);
 begin
-  Form1.AlphaBlend := True;
-  Form1.AlphaBlendValue := 50;
+  ClockForm.AlphaBlend := True;
+  ClockForm.AlphaBlendValue := 50;
   a0.Checked := False;
   a20.Checked := False;
   a40.Checked := False;
@@ -334,7 +333,7 @@ begin
   SaveConfig;
 end;
 
-procedure TForm1.SecondsClick(Sender: TObject);
+procedure TClockForm.SecondsClick(Sender: TObject);
 begin
   if Seconds.Checked = True then
     Seconds.Checked := False
@@ -346,7 +345,7 @@ begin
   SaveConfig;
 end;
 
-procedure TForm1.AboutClick(Sender: TObject);
+procedure TClockForm.AboutClick(Sender: TObject);
 begin
   ShowMessage('Tenox Desktop Clock v2.0' + sLineBreak +
     'Copyright (c) 2017-2018 by Antoni Sawicki' + sLineBreak +
@@ -354,7 +353,7 @@ begin
 end;
 
 
-procedure TForm1.RunOnStartClick(Sender: TObject);
+procedure TClockForm.RunOnStartClick(Sender: TObject);
 begin
   if RunOnStart.Checked then
   begin
@@ -366,56 +365,56 @@ begin
   end;
 end;
 
-procedure TForm1.QuitClick(Sender: TObject);
+procedure TClockForm.QuitClick(Sender: TObject);
 begin
   SaveConfig;
   Application.Terminate();
 end;
 
-procedure TForm1.Timer1Timer(Sender: TObject);
+procedure TClockForm.ClockTimerTick(Sender: TObject);
 begin
-  Label1.Caption := FormatDateTime(TimeFmt, Now);
+  ClockLabel.Caption := FormatDateTime(TimeFmt, Now);
 end;
 
 
-procedure TForm1.TitleBarClick(Sender: TObject);
+procedure TClockForm.TitleBarClick(Sender: TObject);
 begin
-  if Form1.BorderStyle = bsNone then
+  if ClockForm.BorderStyle = bsNone then
     begin
-      Form1.BorderStyle := bsToolWindow;
+      ClockForm.BorderStyle := bsToolWindow;
       TitleBar.Checked := True;
     end
   else
     begin
-      Form1.BorderStyle := bsNone;
+      ClockForm.BorderStyle := bsNone;
       TitleBar.Checked := False;
     end;
     SaveConfig;
 end;
 
-procedure TForm1.IsOnTopClick(Sender: TObject);
+procedure TClockForm.IsOnTopClick(Sender: TObject);
 begin
-  if Form1.FormStyle = fsSystemStayOnTop then
+  if ClockForm.FormStyle = fsSystemStayOnTop then
   begin
-    Form1.FormStyle := fsNormal;
+    ClockForm.FormStyle := fsNormal;
     IsOnTop.Checked := False;
   end
   else
   begin
-    Form1.FormStyle := fsSystemStayOnTop;
+    ClockForm.FormStyle := fsSystemStayOnTop;
     IsOnTop.Checked := True;
   end;
   SaveConfig;
 end;
 
 
-procedure TForm1.Label1MouseDown(Sender: TObject; Button: TMouseButton;
+procedure TClockForm.ClockLabelMouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: integer);
 begin
   FMouseDownPt := Point(X, Y);
 end;
 
-procedure TForm1.Label1MouseMove(Sender: TObject; Shift: TShiftState; X, Y: integer);
+procedure TClockForm.ClockLabelMouseMove(Sender: TObject; Shift: TShiftState; X, Y: integer);
 begin
   if (ssLeft in Shift) then
   begin
