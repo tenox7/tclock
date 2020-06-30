@@ -16,3 +16,4 @@ A small and simple digital clock for the desktop with easy configuration options
 
 * Windows
 * Linux
+* macOS
