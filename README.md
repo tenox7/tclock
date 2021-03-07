@@ -1,4 +1,4 @@
-## TClock - Tenox's Digital Clock 
+## TClock - Tenox's Digital Desktop Clock 
 
 A small and simple digital clock for the desktop with easy configuration options.
 
