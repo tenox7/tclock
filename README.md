@@ -1,10 +1,10 @@
-## TClock - Tenox's Digital Desktop Clock 
+# TClock - Tenox's Digital Desktop Clock 
 
 A small and simple digital clock for the desktop with easy configuration options.
 
 ![tclock screenshot](tclock.png)
 
-# Features
+## Features
 
 * Adjustable font style, size and color
 * Adjustable background color and alpha transparency
@@ -14,7 +14,7 @@ A small and simple digital clock for the desktop with easy configuration options
 * Hide window title bar
 * Auto run on logon (Windows)
 
-# OS Support
+## OS Support
 
 * Windows
 * Linux
