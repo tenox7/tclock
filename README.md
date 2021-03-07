@@ -2,6 +2,8 @@
 
 A small and simple digital clock for the desktop with easy configuration options.
 
+![tclock screenshot](tclock.png)
+
 # Features
 
 * Adjustable font style, size and color
