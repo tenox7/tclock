@@ -6,6 +6,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"image/color"
 	"log"
@@ -21,15 +22,53 @@ import (
 )
 
 var (
-	size     float64 = 32
-	margin           = 10
-	fontName         = "tahoma bold.ttf"
+	fontSize = flag.Float64("font_size", 32, "font size")
+	fontName = flag.String("font_name", "tahoma bold.ttf", "font name, eg arial.ttf")
+	margin   = flag.Int("margin", 10, "window margin")
+	debug    = flag.Bool("debug", false, "debug output")
+	format   = flag.String("time_format", "03:04:05 PM", "https://pkg.go.dev/time#pkg-constants")
+	bgColor  = flag.String("bg", "#808080", "background color")
+	fgColor  = flag.String("fg", "#ffea40", "foreground color")
+	bgRgba   color.RGBA
+	fgRgba   color.RGBA
 	fontFace font.Face
-	debug    = false
-	format   = "03:04:05 PM"
-	bgColor  = color.Gray16{0x8000}
-	fgColor  = color.RGBA{R: 255, G: 234, B: 64, A: 255}
 )
+
+func hexToRgba(s string) color.RGBA {
+	var c color.RGBA
+	c.A = 0xff
+
+	if s[0] != '#' {
+		return c
+	}
+
+	hexToByte := func(b byte) byte {
+		switch {
+		case b >= '0' && b <= '9':
+			return b - '0'
+		case b >= 'a' && b <= 'f':
+			return b - 'a' + 10
+		case b >= 'A' && b <= 'F':
+			return b - 'A' + 10
+		}
+		log.Fatal("invalid color format")
+		return 0
+	}
+
+	switch len(s) {
+	case 7:
+		c.R = hexToByte(s[1])<<4 + hexToByte(s[2])
+		c.G = hexToByte(s[3])<<4 + hexToByte(s[4])
+		c.B = hexToByte(s[5])<<4 + hexToByte(s[6])
+	case 4:
+		c.R = hexToByte(s[1]) * 17
+		c.G = hexToByte(s[2]) * 17
+		c.B = hexToByte(s[3]) * 17
+	default:
+		log.Fatal("invalid color format")
+	}
+	return c
+}
 
 type app struct{}
 
@@ -38,9 +77,9 @@ func (g *app) Update() error {
 }
 
 func (g *app) Draw(screen *ebiten.Image) {
-	screen.Fill(bgColor)
+	screen.Fill(bgRgba)
 
-	text.Draw(screen, time.Now().Format(format), fontFace, margin, int(size)+margin, fgColor)
+	text.Draw(screen, time.Now().Format(*format), fontFace, *margin, int(*fontSize)+*margin, fgRgba)
 
 	if ebiten.IsFocused() {
 		ebiten.SetWindowDecorated(true)
@@ -48,7 +87,7 @@ func (g *app) Draw(screen *ebiten.Image) {
 		ebiten.SetWindowDecorated(false)
 	}
 
-	if !debug {
+	if !*debug {
 		return
 	}
 	ebitenutil.DebugPrint(screen, fmt.Sprintf("TPS: %0.2f\nFPS: %0.2f\nTime: %v",
@@ -74,7 +113,10 @@ func ticker() {
 }
 
 func main() {
-	ff, err := findfont.Find(fontName)
+	flag.Parse()
+	bgRgba = hexToRgba(*bgColor)
+	fgRgba = hexToRgba(*fgColor)
+	ff, err := findfont.Find(*fontName)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -87,7 +129,7 @@ func main() {
 		log.Fatal(err)
 	}
 	fontFace, err = opentype.NewFace(tt, &opentype.FaceOptions{
-		Size:    size,
+		Size:    *fontSize,
 		DPI:     100, // TODO: set actual DPI from ebiten
 		Hinting: font.HintingFull,
 	})
@@ -95,8 +137,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	b := text.BoundString(fontFace, format)
-	ebiten.SetWindowSize(b.Dx()+(margin*2), b.Dy()+(margin*2))
+	b := text.BoundString(fontFace, *format)
+	ebiten.SetWindowSize(b.Dx()+(*margin*2), b.Dy()+(*margin*2))
 	ebiten.SetWindowDecorated(false)
 	ebiten.DeviceScaleFactor()
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeDisabled)
