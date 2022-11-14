@@ -18,6 +18,8 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/text"
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/opentype"
+
+	"fyne.io/systray"
 )
 
 var (
@@ -29,13 +31,13 @@ var (
 	format   = "03:04:05 PM"
 )
 
-type app struct{}
+type tclock struct{}
 
-func (g *app) Update() error {
+func (g *tclock) Update() error {
 	return nil
 }
 
-func (g *app) Draw(screen *ebiten.Image) {
+func (g *tclock) Draw(screen *ebiten.Image) {
 	screen.Fill(color.Gray16{0x8000})
 
 	text.Draw(screen, time.Now().Format(format), fontFace, margin, int(size)+margin, color.White)
@@ -56,7 +58,7 @@ func (g *app) Draw(screen *ebiten.Image) {
 	)
 }
 
-func (g *app) Layout(outsideWidth, outsideHeight int) (int, int) {
+func (g *tclock) Layout(outsideWidth, outsideHeight int) (int, int) {
 	s := ebiten.DeviceScaleFactor()
 	return int(float64(outsideWidth) * s), int(float64(outsideHeight) * s)
 }
@@ -67,6 +69,36 @@ func ticker() {
 		select {
 		case <-ticker.C:
 			ebiten.ScheduleFrame()
+		}
+	}
+}
+
+func menu() {
+	systray.SetTitle("TClock")
+	ampm := systray.AddMenuItemCheckbox("AM/PM Clock", "12 hour AM/PM format", true)
+	secs := systray.AddMenuItemCheckbox("Seconds", "", true)
+	atop := systray.AddMenuItemCheckbox("Always On Top", "", false)
+	titl := systray.AddMenuItemCheckbox("Title Bar", "", false)
+
+	quit := systray.AddMenuItem("Quit", "Exit the app...")
+	quit.Enable()
+
+	for {
+		select {
+		case <-ampm.ClickedCh:
+		case <-secs.ClickedCh:
+		case <-atop.ClickedCh:
+		case <-titl.ClickedCh:
+			if titl.Checked() {
+				titl.Uncheck()
+				ebiten.SetWindowFloating(false)
+			} else {
+				titl.Check()
+				ebiten.SetWindowFloating(true)
+			}
+		case <-quit.ClickedCh:
+			systray.Quit()
+			os.Exit(0)
 		}
 	}
 }
@@ -96,13 +128,15 @@ func main() {
 	b := text.BoundString(fontFace, format)
 	ebiten.SetWindowSize(b.Dx()+(margin*2), b.Dy()+(margin*2))
 	ebiten.SetWindowDecorated(false)
+	//ebiten.SetWindowFloating(false)
 	ebiten.DeviceScaleFactor()
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeDisabled)
 	ebiten.SetWindowTitle("TClock")
 	ebiten.SetTPS(ebiten.SyncWithFPS)
-	ebiten.SetFPSMode(ebiten.FPSModeVsyncOffMinimum)
+
+	go systray.Run(menu, nil)
 	go ticker()
-	if err := ebiten.RunGame(&app{}); err != nil {
+	if err := ebiten.RunGame(&tclock{}); err != nil {
 		log.Fatal(err)
 	}
 }
