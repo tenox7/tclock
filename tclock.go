@@ -27,6 +27,8 @@ var (
 	fontFace font.Face
 	debug    = false
 	format   = "03:04:05 PM"
+	bgColor  = color.Gray16{0x8000}
+	fgColor  = color.RGBA{R: 255, G: 234, B: 64, A: 255}
 )
 
 type app struct{}
@@ -36,9 +38,9 @@ func (g *app) Update() error {
 }
 
 func (g *app) Draw(screen *ebiten.Image) {
-	screen.Fill(color.Gray16{0x8000})
+	screen.Fill(bgColor)
 
-	text.Draw(screen, time.Now().Format(format), fontFace, margin, int(size)+margin, color.White)
+	text.Draw(screen, time.Now().Format(format), fontFace, margin, int(size)+margin, fgColor)
 
 	if ebiten.IsFocused() {
 		ebiten.SetWindowDecorated(true)
