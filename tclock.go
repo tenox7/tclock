@@ -39,7 +39,7 @@ func hexToRgba(s string) color.RGBA {
 	c.A = 0xff
 
 	if s[0] != '#' {
-		return c
+		log.Fatal("color must start with #")
 	}
 
 	hexToByte := func(b byte) byte {
@@ -65,7 +65,7 @@ func hexToRgba(s string) color.RGBA {
 		c.G = hexToByte(s[2]) * 17
 		c.B = hexToByte(s[3]) * 17
 	default:
-		log.Fatal("invalid color format")
+		log.Fatal("invalid color format length")
 	}
 	return c
 }
