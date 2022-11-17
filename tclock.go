@@ -1,7 +1,9 @@
 // tenox clock in go
-// todo:
-// systray menu - maybe https://github.com/fyne-io/systray ?
-// configuration params?
+// Copyright (c) 2022 Google LLC
+
+// TODO:
+// systray menu - https://github.com/fyne-io/systray
+// build real .app for macos
 
 package main
 
