@@ -1,18 +1,12 @@
 # TClock - Tenox's Digital Desktop Clock 
 
-A small and simple digital clock for the desktop with easy configuration options.
+A simple desktop clock for large computer monitors
 
-![tclock screenshot](tclock.png)
+## Legal stuff
 
-## Features
-
-* Adjustable font style, size and color
-* Adjustable background color and alpha transparency
-* Time format AM/PM or 24h
-* Display seconds
-* Always on top
-* Hide window title bar
-* Auto run on logon (Windows)
+- License: Apache
+- Copyright (c) 2022 Google LLC
+- Copyright (c) 2018 by Antoni Sawicki
 
 ## OS Support
 
