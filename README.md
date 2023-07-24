@@ -1,12 +1,6 @@
-# TClock - Tenox's Digital Desktop Clock 
+# TClock
 
-A simple desktop clock for large computer monitors
-
-## OS Support
-
-* Windows
-* Linux
-* macOS
+Tenox's Digital Desktop Clock 
 
 ## Legal stuff
 
