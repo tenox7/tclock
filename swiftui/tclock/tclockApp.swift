@@ -1,7 +1,11 @@
 import SwiftUI
 
 struct ClockView: View {
-    @State private var currentTime: String = ""
+    @State private var currentTime: String = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm:ss"
+        return formatter.string(from: Date())
+    }()
     private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     var body: some View {
@@ -10,7 +14,6 @@ struct ClockView: View {
             .monospacedDigit()
             .fontWeight(.bold)
             .foregroundColor(.secondary)
-            .background(.clear)
             .onReceive(timer) { _ in
                 let formatter = DateFormatter()
                 formatter.dateFormat = "HH:mm:ss"
@@ -39,6 +42,7 @@ struct ClockApp: App {
         WindowGroup {
             ClockView()
                 .frame(width: 260, height: 60)
+                .background(settings.borderless ? Color.clear : Color(nsColor: .windowBackgroundColor))
         }
         .windowResizability(.contentSize)
         .commands {
@@ -80,10 +84,16 @@ class AppSettings: ObservableObject {
             window.styleMask = [.borderless]
             window.isMovableByWindowBackground = true
             window.backgroundColor = .clear
+            window.isOpaque = false
+            window.hasShadow = false
+            window.contentView?.wantsLayer = true
+            window.contentView?.layer?.backgroundColor = .clear
         } else {
             window.styleMask = [.titled, .closable, .miniaturizable]
             window.isMovableByWindowBackground = false
             window.backgroundColor = .windowBackgroundColor
+            window.isOpaque = true
+            window.hasShadow = true
         }
     }
 }
