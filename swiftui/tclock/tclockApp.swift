@@ -11,10 +11,10 @@ struct ClockView: View {
 
     var body: some View {
         Text(currentTime)
-            .font(.system(size: 48))
-            .monospacedDigit()
-            .fontWeight(.bold)
+            .font(Font(settings.font))
             .foregroundColor(settings.fontColor)
+            .fixedSize()
+            .frame(width: settings.windowSize.width, height: settings.windowSize.height)
             .onReceive(timer) { _ in
                 let formatter = DateFormatter()
                 formatter.dateFormat = "HH:mm:ss"
@@ -42,7 +42,6 @@ struct ClockApp: App {
     var body: some Scene {
         WindowGroup {
             ClockView()
-                .frame(width: 260, height: 60)
                 .background(settings.borderless ? Color.clear : Color(nsColor: .windowBackgroundColor))
         }
         .windowResizability(.contentSize)
@@ -53,6 +52,10 @@ struct ClockApp: App {
                 Toggle("Borderless", isOn: $settings.borderless)
                     .keyboardShortcut("b", modifiers: [.command, .shift])
                 Divider()
+                Button("Font...") {
+                    AppSettings.shared.showFontPanel()
+                }
+                .keyboardShortcut("f", modifiers: [.command, .shift])
                 Button("Font Color...") {
                     AppSettings.shared.showColorPanel()
                 }
@@ -90,6 +93,47 @@ class AppSettings: NSObject, ObservableObject {
             else { return }
             UserDefaults.standard.set(data, forKey: "fontColor")
         }
+    }
+
+    @Published var font: NSFont = {
+        guard let data = UserDefaults.standard.data(forKey: "font"),
+              let font = try? NSKeyedUnarchiver.unarchivedObject(ofClass: NSFont.self, from: data)
+        else { return NSFont.monospacedDigitSystemFont(ofSize: 48, weight: .bold) }
+        return font
+    }() {
+        didSet {
+            guard let data = try? NSKeyedArchiver.archivedData(withRootObject: font, requiringSecureCoding: false)
+            else { return }
+            UserDefaults.standard.set(data, forKey: "font")
+            updateWindowSize()
+        }
+    }
+
+    @Published var windowSize: CGSize = CGSize(width: 260, height: 60)
+
+    override init() {
+        super.init()
+        updateWindowSize()
+    }
+
+    func updateWindowSize() {
+        let sampleText = "00:00:00"
+        let attributes: [NSAttributedString.Key: Any] = [.font: font]
+        let size = (sampleText as NSString).size(withAttributes: attributes)
+        windowSize = CGSize(width: ceil(size.width) + 20, height: ceil(size.height) + 10)
+    }
+
+    func showFontPanel() {
+        let panel = NSFontPanel.shared
+        let manager = NSFontManager.shared
+        manager.setSelectedFont(font, isMultiple: false)
+        manager.target = self
+        manager.action = #selector(fontChanged(_:))
+        panel.makeKeyAndOrderFront(nil)
+    }
+
+    @objc func fontChanged(_ sender: NSFontManager) {
+        font = sender.convert(font)
     }
 
     func showColorPanel() {
