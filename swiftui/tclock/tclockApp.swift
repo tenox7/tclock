@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct ClockView: View {
+    @ObservedObject private var settings = AppSettings.shared
     @State private var currentTime: String = {
         let formatter = DateFormatter()
         formatter.dateFormat = "HH:mm:ss"
@@ -13,7 +14,7 @@ struct ClockView: View {
             .font(.system(size: 48))
             .monospacedDigit()
             .fontWeight(.bold)
-            .foregroundColor(.secondary)
+            .foregroundColor(settings.fontColor)
             .onReceive(timer) { _ in
                 let formatter = DateFormatter()
                 formatter.dateFormat = "HH:mm:ss"
@@ -51,12 +52,17 @@ struct ClockApp: App {
                     .keyboardShortcut("t", modifiers: [.command, .shift])
                 Toggle("Borderless", isOn: $settings.borderless)
                     .keyboardShortcut("b", modifiers: [.command, .shift])
+                Divider()
+                Button("Font Color...") {
+                    AppSettings.shared.showColorPanel()
+                }
+                .keyboardShortcut("c", modifiers: [.command, .shift])
             }
         }
     }
 }
 
-class AppSettings: ObservableObject {
+class AppSettings: NSObject, ObservableObject {
     static let shared = AppSettings()
 
     @Published var alwaysOnTop: Bool = UserDefaults.standard.bool(forKey: "alwaysOnTop") {
@@ -71,6 +77,32 @@ class AppSettings: ObservableObject {
             UserDefaults.standard.set(borderless, forKey: "borderless")
             updateWindowStyle()
         }
+    }
+
+    @Published var fontColor: Color = {
+        guard let data = UserDefaults.standard.data(forKey: "fontColor"),
+              let nsColor = try? NSKeyedUnarchiver.unarchivedObject(ofClass: NSColor.self, from: data)
+        else { return Color.secondary }
+        return Color(nsColor: nsColor)
+    }() {
+        didSet {
+            guard let data = try? NSKeyedArchiver.archivedData(withRootObject: NSColor(fontColor), requiringSecureCoding: false)
+            else { return }
+            UserDefaults.standard.set(data, forKey: "fontColor")
+        }
+    }
+
+    func showColorPanel() {
+        let panel = NSColorPanel.shared
+        panel.color = NSColor(fontColor)
+        panel.setTarget(self)
+        panel.setAction(#selector(colorChanged(_:)))
+        panel.makeKeyAndOrderFront(nil)
+        panel.isContinuous = true
+    }
+
+    @objc func colorChanged(_ sender: NSColorPanel) {
+        fontColor = Color(nsColor: sender.color)
     }
 
     func updateWindowLevel() {
