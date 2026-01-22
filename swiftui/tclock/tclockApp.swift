@@ -20,30 +20,20 @@ struct ClockView: View {
 }
 
 class AppDelegate: NSObject, NSApplicationDelegate {
-    @AppStorage("alwaysOnTop") var alwaysOnTop: Bool = false
-
     func applicationDidFinishLaunching(_ notification: Notification) {
-        updateWindowLevel()
+        AppSettings.shared.updateWindowLevel()
+        AppSettings.shared.updateWindowStyle()
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         return true
-    }
-
-    func updateWindowLevel() {
-        guard let window = NSApplication.shared.windows.first else { return }
-        window.level = alwaysOnTop ? .floating : .normal
-    }
-
-    @objc func toggleAlwaysOnTop() {
-        alwaysOnTop.toggle()
-        updateWindowLevel()
     }
 }
 
 @main
 struct ClockApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    @ObservedObject private var settings = AppSettings.shared
 
     var body: some Scene {
         WindowGroup {
@@ -53,15 +43,47 @@ struct ClockApp: App {
         .windowResizability(.contentSize)
         .commands {
             CommandGroup(after: .windowArrangement) {
-                Toggle("Always on Top", isOn: Binding(
-                    get: { appDelegate.alwaysOnTop },
-                    set: { newValue in
-                        appDelegate.alwaysOnTop = newValue
-                        appDelegate.updateWindowLevel()
-                    }
-                ))
-                .keyboardShortcut("t", modifiers: [.command, .shift])
+                Toggle("Always on Top", isOn: $settings.alwaysOnTop)
+                    .keyboardShortcut("t", modifiers: [.command, .shift])
+                Toggle("Borderless", isOn: $settings.borderless)
+                    .keyboardShortcut("b", modifiers: [.command, .shift])
             }
+        }
+    }
+}
+
+class AppSettings: ObservableObject {
+    static let shared = AppSettings()
+
+    @Published var alwaysOnTop: Bool = UserDefaults.standard.bool(forKey: "alwaysOnTop") {
+        didSet {
+            UserDefaults.standard.set(alwaysOnTop, forKey: "alwaysOnTop")
+            updateWindowLevel()
+        }
+    }
+
+    @Published var borderless: Bool = UserDefaults.standard.bool(forKey: "borderless") {
+        didSet {
+            UserDefaults.standard.set(borderless, forKey: "borderless")
+            updateWindowStyle()
+        }
+    }
+
+    func updateWindowLevel() {
+        guard let window = NSApplication.shared.windows.first else { return }
+        window.level = alwaysOnTop ? .floating : .normal
+    }
+
+    func updateWindowStyle() {
+        guard let window = NSApplication.shared.windows.first else { return }
+        if borderless {
+            window.styleMask = [.borderless]
+            window.isMovableByWindowBackground = true
+            window.backgroundColor = .clear
+        } else {
+            window.styleMask = [.titled, .closable, .miniaturizable]
+            window.isMovableByWindowBackground = false
+            window.backgroundColor = .windowBackgroundColor
         }
     }
 }
