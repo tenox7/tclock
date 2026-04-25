@@ -1,154 +1,104 @@
-// tenox clock in go
-// Copyright (c) 2022 Google LLC
-
-// TODO:
-// systray menu - https://github.com/fyne-io/systray
-// build real .app for macos
-
 package main
 
 import (
 	"flag"
-	"fmt"
 	"image/color"
 	"log"
-	"os"
 	"time"
 
-	"github.com/flopp/go-findfont"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/hajimehoshi/ebiten/v2/examples/resources/fonts"
 	"github.com/hajimehoshi/ebiten/v2/text"
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/opentype"
 )
 
-var (
-	fontSize = flag.Float64("font_size", 32, "font size")
-	fontName = flag.String("font_name", "tahoma bold.ttf", "font name, eg arial.ttf")
-	margin   = flag.Int("margin", 10, "window margin")
-	debug    = flag.Bool("debug", false, "debug output")
-	format   = flag.String("time_format", "03:04:05 PM", "https://pkg.go.dev/time#pkg-constants")
-	bgColor  = flag.String("bg", "#808080", "background color")
-	fgColor  = flag.String("fg", "#ffea40", "foreground color")
-	bgRgba   color.RGBA
-	fgRgba   color.RGBA
-	fontFace font.Face
+const (
+	screenWidth  = 640
+	screenHeight = 480
 )
 
-func hexToRgba(s string) color.RGBA {
-	var c color.RGBA
-	c.A = 0xff
+var (
+	fontSize       int
+	backgroundColor string
+	clockFont      font.Face
+	bgColor        color.Color
+)
 
-	if s[0] != '#' {
-		log.Fatal("color must start with #")
-	}
-
-	hexToByte := func(b byte) byte {
-		switch {
-		case b >= '0' && b <= '9':
-			return b - '0'
-		case b >= 'a' && b <= 'f':
-			return b - 'a' + 10
-		case b >= 'A' && b <= 'F':
-			return b - 'A' + 10
-		}
-		log.Fatal("invalid color format")
-		return 0
-	}
-
-	switch len(s) {
-	case 7:
-		c.R = hexToByte(s[1])<<4 + hexToByte(s[2])
-		c.G = hexToByte(s[3])<<4 + hexToByte(s[4])
-		c.B = hexToByte(s[5])<<4 + hexToByte(s[6])
-	case 4:
-		c.R = hexToByte(s[1]) * 17
-		c.G = hexToByte(s[2]) * 17
-		c.B = hexToByte(s[3]) * 17
-	default:
-		log.Fatal("invalid color format length")
-	}
-	return c
+type Game struct {
+	currentTime string
+	lastUpdate  time.Time
 }
 
-type app struct{}
-
-func (g *app) Update() error {
+func (g *Game) Update() error {
+	now := time.Now()
+	if now.Sub(g.lastUpdate) >= time.Second {
+		g.currentTime = now.Format("15:04:05")
+		g.lastUpdate = now
+	}
 	return nil
 }
 
-func (g *app) Draw(screen *ebiten.Image) {
-	screen.Fill(bgRgba)
+func (g *Game) Draw(screen *ebiten.Image) {
+	screen.Fill(bgColor)
+	
+	bounds := text.BoundString(clockFont, g.currentTime)
+	x := (screenWidth - bounds.Dx()) / 2
+	y := (screenHeight + bounds.Dy()) / 2
 
-	text.Draw(screen, time.Now().Format(*format), fontFace, *margin, int(*fontSize)+*margin, fgRgba)
-
-	if ebiten.IsFocused() {
-		ebiten.SetWindowDecorated(true)
-	} else {
-		ebiten.SetWindowDecorated(false)
-	}
-
-	if !*debug {
-		return
-	}
-	ebitenutil.DebugPrint(screen, fmt.Sprintf("TPS: %0.2f\nFPS: %0.2f\nTime: %v",
-		ebiten.ActualTPS(),
-		ebiten.ActualFPS(),
-		time.Now()),
-	)
+	text.Draw(screen, g.currentTime, clockFont, x, y, color.White)
 }
 
-func (g *app) Layout(outsideWidth, outsideHeight int) (int, int) {
-	s := ebiten.DeviceScaleFactor()
-	return int(float64(outsideWidth) * s), int(float64(outsideHeight) * s)
+func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
+	return screenWidth, screenHeight
 }
 
-func ticker() {
-	ticker := time.NewTicker(1 * time.Second)
-	for {
-		select {
-		case <-ticker.C:
-			ebiten.ScheduleFrame()
-		}
-	}
-}
-
-func main() {
+func init() {
+	flag.IntVar(&fontSize, "font-size", 72, "Font size for the clock")
+	flag.StringVar(&backgroundColor, "bg", "black", "Background color (black, white, red, green, blue)")
 	flag.Parse()
-	bgRgba = hexToRgba(*bgColor)
-	fgRgba = hexToRgba(*fgColor)
-	ff, err := findfont.Find(*fontName)
+
+	tt, err := opentype.Parse(fonts.MPlus1pRegular_ttf)
 	if err != nil {
 		log.Fatal(err)
 	}
-	f, err := os.ReadFile(ff)
-	if err != nil {
-		log.Fatal(err)
-	}
-	tt, err := opentype.Parse(f)
-	if err != nil {
-		log.Fatal(err)
-	}
-	fontFace, err = opentype.NewFace(tt, &opentype.FaceOptions{
-		Size:    *fontSize,
-		DPI:     100, // TODO: set actual DPI from ebiten
+
+	clockFont, err = opentype.NewFace(tt, &opentype.FaceOptions{
+		Size:    float64(fontSize),
+		DPI:     72,
 		Hinting: font.HintingFull,
 	})
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	b := text.BoundString(fontFace, *format)
-	ebiten.SetWindowSize(b.Dx()+(*margin*2), b.Dy()+(*margin*2))
-	ebiten.SetWindowDecorated(false)
-	ebiten.DeviceScaleFactor()
-	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeDisabled)
-	ebiten.SetWindowTitle("TClock")
-	ebiten.SetTPS(ebiten.SyncWithFPS)
-	ebiten.SetFPSMode(ebiten.FPSModeVsyncOffMinimum)
-	go ticker()
-	if err := ebiten.RunGame(&app{}); err != nil {
+	switch backgroundColor {
+	case "black":
+		bgColor = color.Black
+	case "white":
+		bgColor = color.White
+	case "red":
+		bgColor = color.RGBA{255, 0, 0, 255}
+	case "green":
+		bgColor = color.RGBA{0, 255, 0, 255}
+	case "blue":
+		bgColor = color.RGBA{0, 0, 255, 255}
+	default:
+		log.Fatalf("Unknown background color: %s", backgroundColor)
+	}
+}
+
+func main() {
+	ebiten.SetWindowSize(screenWidth, screenHeight)
+	ebiten.SetWindowTitle("Digital Clock")
+	ebiten.SetMaxTPS(10)  // Limit updates to 10 times per second
+
+	game := &Game{
+		currentTime: time.Now().Format("15:04:05"),
+		lastUpdate:  time.Now(),
+	}
+
+	if err := ebiten.RunGame(game); err != nil {
 		log.Fatal(err)
 	}
 }
