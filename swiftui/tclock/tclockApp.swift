@@ -27,6 +27,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         AppSettings.shared.updateWindowLevel()
         AppSettings.shared.updateWindowStyle()
+        AppSettings.shared.updateWindowSpaces()
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
@@ -49,6 +50,8 @@ struct ClockApp: App {
             CommandGroup(after: .windowArrangement) {
                 Toggle("Always on Top", isOn: $settings.alwaysOnTop)
                     .keyboardShortcut("t", modifiers: [.command, .shift])
+                Toggle("All Desktops", isOn: $settings.allDesktops)
+                    .keyboardShortcut("d", modifiers: [.command, .shift])
                 Toggle("Borderless", isOn: $settings.borderless)
                     .keyboardShortcut("b", modifiers: [.command, .shift])
                 Divider()
@@ -72,6 +75,13 @@ class AppSettings: NSObject, ObservableObject {
         didSet {
             UserDefaults.standard.set(alwaysOnTop, forKey: "alwaysOnTop")
             updateWindowLevel()
+        }
+    }
+
+    @Published var allDesktops: Bool = UserDefaults.standard.bool(forKey: "allDesktops") {
+        didSet {
+            UserDefaults.standard.set(allDesktops, forKey: "allDesktops")
+            updateWindowSpaces()
         }
     }
 
@@ -152,6 +162,15 @@ class AppSettings: NSObject, ObservableObject {
     func updateWindowLevel() {
         guard let window = NSApplication.shared.windows.first else { return }
         window.level = alwaysOnTop ? .floating : .normal
+    }
+
+    func updateWindowSpaces() {
+        guard let window = NSApplication.shared.windows.first else { return }
+        if allDesktops {
+            window.collectionBehavior.insert(.canJoinAllSpaces)
+        } else {
+            window.collectionBehavior.remove(.canJoinAllSpaces)
+        }
     }
 
     func updateWindowStyle() {
